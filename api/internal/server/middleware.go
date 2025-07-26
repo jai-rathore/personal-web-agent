@@ -73,6 +73,13 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 func SecurityHeadersMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Parse allowed origins for CSP
+			origins := strings.Split(cfg.AllowedOrigin, ",")
+			cspOrigins := make([]string, len(origins))
+			for i, origin := range origins {
+				cspOrigins[i] = strings.TrimSpace(origin)
+			}
+			
 			// Content Security Policy
 			csp := fmt.Sprintf(
 				"default-src 'self'; "+
@@ -83,7 +90,7 @@ func SecurityHeadersMiddleware(cfg *config.Config) func(http.Handler) http.Handl
 					"frame-ancestors 'none'; "+
 					"base-uri 'self'; "+
 					"form-action 'self'",
-				cfg.AllowedOrigin,
+				strings.Join(cspOrigins, " "),
 			)
 			w.Header().Set("Content-Security-Policy", csp)
 			
