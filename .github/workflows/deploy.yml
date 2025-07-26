@@ -1,0 +1,111 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-check:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+        
+    - name: Check for deployment-worthy changes
+      id: check
+      run: |
+        # Check if there are meaningful changes
+        git diff --name-only HEAD~1 HEAD > changed_files.txt
+        
+        # Check if any non-doc files changed
+        if grep -vE '\.(md|txt)$|^\.github/|^docs/' changed_files.txt > /dev/null; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "Found deployment-worthy changes"
+        else
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+          echo "Only documentation changes, skipping deployment"
+        fi
+
+  backend-deploy:
+    name: Deploy Backend to Render
+    needs: deploy-check
+    if: needs.deploy-check.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+      run: |
+        # Trigger Render deployment via API
+        curl -X POST \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -H "Content-Type: application/json" \
+          "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+          -d '{"clearCache": "clear"}'
+        
+        echo "Backend deployment triggered on Render"
+
+  frontend-deploy:
+    name: Deploy Frontend to Vercel
+    needs: deploy-check
+    if: needs.deploy-check.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Vercel
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      run: |
+        # Install Vercel CLI
+        npm i -g vercel
+        
+        # Pull Vercel environment information
+        cd web
+        vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+        
+        # Build and deploy
+        vercel build --prod --token=$VERCEL_TOKEN
+        vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+
+  health-check:
+    name: Post-deployment Health Check
+    needs: [backend-deploy, frontend-deploy]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Wait for deployments
+      run: sleep 60
+      
+    - name: Check backend health
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://personal-web-agent.onrender.com/healthz)
+        if [ "$response" -eq 200 ]; then
+          echo "✅ Backend is healthy"
+        else
+          echo "❌ Backend health check failed with status: $response"
+          exit 1
+        fi
+        
+    - name: Check frontend
+      run: |
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://jairathore.com)
+        if [ "$response" -eq 200 ]; then
+          echo "✅ Frontend is accessible"
+        else
+          echo "❌ Frontend check failed with status: $response"
+          exit 1
+        fi

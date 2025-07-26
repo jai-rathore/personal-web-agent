@@ -1,0 +1,76 @@
+name: Dependency Update Check
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  backend-deps:
+    name: Check Go Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        
+    - name: Check for outdated dependencies
+      run: |
+        cd api
+        go list -u -m all
+        
+    - name: Update dependencies
+      run: |
+        cd api
+        go get -u ./...
+        go mod tidy
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        commit-message: 'chore: update Go dependencies'
+        title: 'chore: Update Go dependencies'
+        body: |
+          This PR updates Go dependencies to their latest versions.
+          
+          Please review and test before merging.
+        branch: update-go-dependencies
+        
+  frontend-deps:
+    name: Check Node Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Check for outdated dependencies
+      run: |
+        cd web
+        npm outdated || true
+        
+    - name: Update dependencies
+      run: |
+        cd web
+        npm update
+        npm audit fix || true
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v6
+      with:
+        commit-message: 'chore: update Node dependencies'
+        title: 'chore: Update Node dependencies'
+        body: |
+          This PR updates Node dependencies to their latest versions.
+          
+          Please review and test before merging.
+        branch: update-node-dependencies
