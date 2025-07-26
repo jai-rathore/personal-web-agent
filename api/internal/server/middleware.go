@@ -106,8 +106,14 @@ func SecurityHeadersMiddleware(cfg *config.Config) func(http.Handler) http.Handl
 
 // CORSMiddleware configures CORS
 func CORSMiddleware(cfg *config.Config) *cors.Cors {
+	// Split comma-separated origins
+	origins := strings.Split(cfg.AllowedOrigin, ",")
+	for i := range origins {
+		origins[i] = strings.TrimSpace(origins[i])
+	}
+	
 	return cors.New(cors.Options{
-		AllowedOrigins: []string{cfg.AllowedOrigin},
+		AllowedOrigins: origins,
 		AllowedMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
