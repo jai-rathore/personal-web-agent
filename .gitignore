@@ -28,8 +28,9 @@ dist/
 # Environment files
 .env
 .env.local
-.env.production
 .env.development
+# Allow production env for deployment
+# .env.production
 
 # IDE files
 .vscode/

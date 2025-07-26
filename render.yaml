@@ -2,8 +2,9 @@ services:
   - type: web
     name: personal-web-agent-api
     runtime: go
-    buildCommand: cd api && go build -o bin/server ./cmd/server
-    startCommand: ./api/bin/server
+    rootDir: api
+    buildCommand: go build -o bin/server ./cmd/server
+    startCommand: ./bin/server
     envVars:
       - key: PORT
         value: 8080
@@ -28,6 +29,6 @@ services:
       - key: SSE_TIMEOUT
         value: 5m
       - key: CONTENT_DIR
-        value: ./content
+        value: ../content
       - key: TZ
         value: America/Los_Angeles
