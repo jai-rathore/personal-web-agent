@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply h-full;
+  }
+  
+  body {
+    @apply h-full m-0 bg-gray-50 text-gray-900 font-sans antialiased;
+  }
+  
+  #root {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .message-bubble {
+    @apply max-w-[80%] rounded-lg px-4 py-2 shadow-sm;
+  }
+  
+  .message-user {
+    @apply bg-blue-600 text-white ml-auto;
+  }
+  
+  .message-assistant {
+    @apply bg-white text-gray-900 border border-gray-200;
+  }
+  
+  .starter-chip {
+    @apply inline-block px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors;
+  }
+}

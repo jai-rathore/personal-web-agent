@@ -1,0 +1,9 @@
+{
+  "packs": [
+    {
+      "id": "resume",
+      "path": "content/jai_rathore_resume.md",
+      "topicHints": ["resume", "work", "experience", "skills", "projects", "background", "career", "education", "tesla", "ai", "engineering", "software"]
+    }
+  ]
+}
