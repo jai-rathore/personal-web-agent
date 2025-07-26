@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: personal-web-agent-api
+    runtime: go
+    buildCommand: cd api && go build -o bin/server ./cmd/server
+    startCommand: ./api/bin/server
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ENVIRONMENT
+        value: production
+      - key: BUILD_SHA
+        generateValue: true
+      - key: ALLOWED_ORIGIN
+        value: https://personal-web-agent.vercel.app
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CHAT_RATE_LIMIT
+        value: 60
+      - key: CHAT_RATE_WINDOW
+        value: 5m
+      - key: ACTION_RATE_LIMIT
+        value: 5
+      - key: ACTION_RATE_WINDOW
+        value: 10m
+      - key: REQUEST_TIMEOUT
+        value: 30s
+      - key: SSE_TIMEOUT
+        value: 5m
+      - key: CONTENT_DIR
+        value: ./content
+      - key: TZ
+        value: America/Los_Angeles
