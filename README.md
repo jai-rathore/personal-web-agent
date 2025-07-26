@@ -1,12 +1,122 @@
-# Jai's Personal Web Agent API
+# Jai's Personal Web Agent
 
-A Go-based backend API that serves as Jai's internet representative, providing:
-- Grounded Q&A about Jai using content from his resume  
-- Meeting scheduling via Calendly integration
-- Direct contact information
-- Guardrails to ensure responses stay within scope
+A modern, AI-powered personal website that serves as an interactive introduction to Jai Rathore. Chat with an intelligent agent to learn about Jai's background, skills, experience, and schedule meetings seamlessly.
 
-## Features
+## 🌟 Features
+
+- **Interactive AI Chat**: Powered by Google Gemini, ask questions about Jai's professional background
+- **Intelligent Responses**: Context-aware responses about skills, experience, and projects  
+- **Meeting Scheduling**: Direct integration with Calendly for easy meeting booking
+- **Responsive Design**: Optimized for both desktop and mobile experiences
+- **Real-time Streaming**: Server-sent events for smooth, real-time conversation flow
+- **Content Security**: Built-in guardrails and rate limiting for safe interactions
+
+## 🚀 Live Demo
+
+Visit the live application at: **[jairathore.com](https://jairathore.com)**
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **React** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for responsive styling
+- **Zustand** for state management
+
+### Backend  
+- **Go** with Gorilla Mux for HTTP routing
+- **Google Gemini AI** for natural language processing
+- **Server-Sent Events** for real-time streaming
+- **Comprehensive middleware** for logging, security, and rate limiting
+
+### Infrastructure
+- **Frontend**: Deployed on [Vercel](https://vercel.com)
+- **Backend**: Deployed on [Render](https://render.com)
+- **Domain**: Custom domain with SSL
+- **CI/CD**: GitHub Actions for automated testing and deployment
+
+## 📁 Project Structure
+
+```
+├── api/                 # Go backend application
+│   ├── cmd/server/      # Application entry point
+│   ├── internal/        # Internal packages
+│   └── README.md        # Backend documentation
+├── web/                 # React frontend application  
+│   ├── src/             # Source code
+│   └── README.md        # Frontend documentation
+├── content/             # Content and data files
+├── .github/workflows/   # GitHub Actions CI/CD
+└── docs/                # Additional documentation
+```
+
+## 🔧 Development
+
+For detailed development instructions, see:
+- [Backend Documentation](./api/README.md)
+- [Frontend Documentation](./web/README.md)
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/jai-rathore/personal-web-agent.git
+cd personal-web-agent
+
+# Install dependencies
+make install
+
+# Start development servers
+make dev
+```
+
+## 🚀 Deployment
+
+This project uses automated CI/CD with GitHub Actions:
+
+- **Continuous Integration**: Runs tests, linting, and security scans on every push
+- **Automated Deployment**: Deploys to production on pushes to `main` branch
+- **Health Checks**: Post-deployment verification of both frontend and backend
+- **Dependency Updates**: Weekly automated dependency update PRs
+
+## 🔒 Security Features
+
+- Content Security Policy (CSP) headers
+- CORS configuration for cross-origin requests
+- Rate limiting for API endpoints
+- Input validation and sanitization
+- Security scanning in CI/CD pipeline
+
+## 📊 Monitoring
+
+- Request logging with unique IDs
+- Performance metrics and timing
+- Error tracking and alerting
+- Health check endpoints
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `make test`
+5. Submit a pull request
+
+## 📞 Contact
+
+- **Website**: [jairathore.com](https://jairathore.com)
+- **Email**: [jaiadityarathore@gmail.com](mailto:jaiadityarathore@gmail.com)
+- **LinkedIn**: [linkedin.com/in/jrathore](https://www.linkedin.com/in/jrathore)
+- **GitHub**: [github.com/jai-rathore](https://github.com/jai-rathore)
+- **X/Twitter**: [@Jai_A_Rathore](https://x.com/Jai_A_Rathore)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+*Built with ❤️ by Jai Rathore*
 
 - **Chat API**: Real-time streaming chat responses via Server-Sent Events (SSE) with loading spinner UX
 - **Gemini 2.5 Pro Integration**: Uses Google's Gemini 2.5 Pro API for chat, classification, and tool reasoning

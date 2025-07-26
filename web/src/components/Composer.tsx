@@ -60,7 +60,7 @@ const Composer: React.FC<ComposerProps> = ({ onSend, isStreaming, isDocked = fal
           }}
           onKeyDown={handleKeyDown}
           placeholder="Ask about Jai's background, skills, or schedule a meeting..."
-          className="w-full px-4 py-3 pr-12 bg-white border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 pr-12 bg-white border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center sm:text-left placeholder-gray-400"
           rows={1}
           disabled={isStreaming}
         />
@@ -75,7 +75,8 @@ const Composer: React.FC<ComposerProps> = ({ onSend, isStreaming, isDocked = fal
         </button>
       </div>
       <p className="mt-2 text-xs text-gray-500 text-center">
-        Press Enter to send, Shift+Enter for new line, ⌘K to focus
+        <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line, ⌘K to focus</span>
+        <span className="sm:hidden">Tap send button or use return key</span>
       </p>
     </form>
   );

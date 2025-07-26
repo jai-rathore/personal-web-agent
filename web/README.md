@@ -1,23 +1,24 @@
-# Jai's Personal Web Agent - Frontend
+# Personal Web Agent - Frontend
 
-A React frontend for Jai's personal web agent chat interface.
+A modern React-based frontend for Jai's personal web agent. Built with TypeScript, Vite, and Tailwind CSS for a responsive and interactive chat experience.
 
 ## Features
 
-- **Chat Interface**: Real-time chat with Jai's AI representative
-- **Real-time Streaming**: Server-sent events with loading spinner and progressive text rendering
-- **Meeting Scheduling**: Direct Calendly integration for easy 30-minute meeting booking
-- **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
-- **Type Safety**: Full TypeScript implementation
+- **Real-time Chat Interface**: Stream responses using Server-Sent Events
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **Modern UI**: Clean, professional design with Tailwind CSS
+- **Type Safety**: Full TypeScript support for better development experience
+- **Fast Development**: Powered by Vite for instant hot module replacement
+- **State Management**: Zustand for simple and effective state management
 
 ## Tech Stack
 
-- React 18 with hooks
-- TypeScript
-- Vite (build tool)
-- Tailwind CSS (styling)
-- Zustand (state management)
-- React Router (navigation)
+- **React 18** with TypeScript
+- **Vite** for build tooling and development
+- **Tailwind CSS** for styling
+- **Zustand** for state management
+- **ESLint** for code quality
+- **PostCSS** for CSS processing
 
 ## Development
 

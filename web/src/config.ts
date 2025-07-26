@@ -9,6 +9,7 @@ export const config = {
     email: 'jaiadityarathore@gmail.com',
     linkedin: 'https://www.linkedin.com/in/jrathore',
     twitter: 'https://x.com/Jai_A_Rathore',
+    github: 'https://github.com/jai-rathore/personal-web-agent',
   },
 } as const;
 
@@ -31,4 +32,11 @@ export const getLinkedInUrl = () => {
  */
 export const getTwitterUrl = () => {
   return config.contact.twitter;
+};
+
+/**
+ * Generate GitHub URL
+ */
+export const getGitHubUrl = () => {
+  return config.contact.github;
 };
