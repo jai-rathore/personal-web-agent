@@ -124,7 +124,9 @@ func (h *Handler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", h.config.AllowedOrigin)
+	
+	// CORS is already handled by middleware, don't set it here
+	// The middleware will set the appropriate origin based on the request
 	
 	// Send initial connection
 	fmt.Fprintf(w, "data: %s\n\n", `{"type":"connected"}`)
@@ -300,7 +302,7 @@ func (h *Handler) sendSSERefusal(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
-		w.Header().Set("Access-Control-Allow-Origin", h.config.AllowedOrigin)
+		// CORS is handled by middleware
 	}
 	
 	event := types.SSEEvent{
