@@ -27,8 +27,13 @@ func NewSMTPEmailService(cfg *config.Config) *SMTPEmailService {
 // SendFeedbackEmail sends a feedback notification email to Jai
 func (s *SMTPEmailService) SendFeedbackEmail(ctx context.Context, feedback *types.FeedbackRequest) error {
 	// Skip if email is not configured
-	if s.config.SMTPHost == "" || s.config.SMTPPort == "" {
-		log.Info().Msg("SMTP not configured, skipping email notification")
+	if s.config.SMTPHost == "" || s.config.SMTPPort == "" || s.config.SMTPUsername == "" || s.config.SMTPPassword == "" {
+		log.Info().
+			Str("smtp_host", s.config.SMTPHost).
+			Str("smtp_port", s.config.SMTPPort).
+			Str("smtp_username", s.config.SMTPUsername).
+			Bool("smtp_password_set", s.config.SMTPPassword != "").
+			Msg("SMTP not fully configured, skipping email notification")
 		return nil
 	}
 

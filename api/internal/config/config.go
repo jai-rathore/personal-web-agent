@@ -97,6 +97,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("GEMINI_API_KEY is required")
 	}
 
+	// Log SMTP configuration for debugging (without sensitive data)
+	fmt.Printf("SMTP Config - Host: '%s', Port: '%s', Username: '%s', Password set: %t\n",
+		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword != "")
+
 	return cfg, nil
 }
 
