@@ -47,3 +47,16 @@ export interface ChatStore {
   setStreaming: (streaming: boolean) => void;
   reset: () => void;
 }
+
+export interface FeedbackRequest {
+  message: string;
+  name?: string;
+  email?: string;
+  page?: string;
+}
+
+export interface FeedbackResponse {
+  status: string;
+  message: string;
+  id?: string;
+}

@@ -50,6 +50,23 @@ type ErrorResponse struct {
 	Code    int    `json:"code,omitempty"`
 }
 
+// FeedbackRequest represents a visitor feedback submission
+type FeedbackRequest struct {
+	Message   string    `json:"message" validate:"required,min=5,max=1000"`
+	Name      string    `json:"name,omitempty" validate:"max=100"`
+	Email     string    `json:"email,omitempty" validate:"email"`
+	Page      string    `json:"page,omitempty" validate:"max=200"`
+	UserAgent string    `json:"userAgent,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// FeedbackResponse represents the response after submitting feedback
+type FeedbackResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	ID      string `json:"id,omitempty"`
+}
+
 // HealthResponse is the response for /healthz endpoint
 type HealthResponse struct {
 	Status        string            `json:"status"`

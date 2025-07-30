@@ -9,16 +9,18 @@ import (
 	"github.com/jrathore/personal-web-agent/api/internal/chat"
 	"github.com/jrathore/personal-web-agent/api/internal/config"
 	"github.com/jrathore/personal-web-agent/api/internal/content"
+	"github.com/jrathore/personal-web-agent/api/internal/feedback"
 	"github.com/jrathore/personal-web-agent/api/internal/types"
 	"github.com/ulule/limiter/v3"
 )
 
 // Server holds all the handlers and dependencies
 type Server struct {
-	config        *config.Config
-	contentLoader *content.Loader
-	chatHandler   *chat.Handler
-	router        *mux.Router
+	config          *config.Config
+	contentLoader   *content.Loader
+	chatHandler     *chat.Handler
+	feedbackHandler *feedback.Handler
+	router          *mux.Router
 }
 
 // NewServer creates a new HTTP server
@@ -26,27 +28,29 @@ func NewServer(
 	cfg *config.Config,
 	contentLoader *content.Loader,
 	chatHandler *chat.Handler,
+	feedbackHandler *feedback.Handler,
 ) *Server {
 	s := &Server{
-		config:        cfg,
-		contentLoader: contentLoader,
-		chatHandler:   chatHandler,
-		router:        mux.NewRouter(),
+		config:          cfg,
+		contentLoader:   contentLoader,
+		chatHandler:     chatHandler,
+		feedbackHandler: feedbackHandler,
+		router:          mux.NewRouter(),
 	}
-	
+
 	s.setupRoutes()
 	return s
 }
 
 // setupRoutes configures all the routes
 func (s *Server) setupRoutes() {
-	
+
 	// Health check endpoint (no rate limiting)
 	s.router.HandleFunc("/healthz", s.handleHealth).Methods("GET")
-	
+
 	// Privacy endpoint (no rate limiting)
 	s.router.HandleFunc("/privacy", s.handlePrivacy).Methods("GET")
-	
+
 	// Chat endpoint with rate limiting
 	chatRouter := s.router.PathPrefix("/chat").Subrouter()
 	chatRouter.Use(RateLimitMiddleware(limiter.Rate{
@@ -54,7 +58,15 @@ func (s *Server) setupRoutes() {
 		Limit:  int64(s.config.ChatRateLimit),
 	}, s.config.ChatRateLimit))
 	chatRouter.HandleFunc("", s.chatHandler.HandleChat).Methods("POST")
-	
+
+	// Feedback endpoint with rate limiting
+	feedbackRouter := s.router.PathPrefix("/feedback").Subrouter()
+	feedbackRouter.Use(RateLimitMiddleware(limiter.Rate{
+		Period: s.config.ActionRateWindow,
+		Limit:  int64(s.config.ActionRateLimit),
+	}, s.config.ActionRateLimit))
+	feedbackRouter.HandleFunc("", s.feedbackHandler.HandleSubmitFeedback).Methods("POST")
+
 	// CORS preflight for all routes
 	s.router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -74,7 +86,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		PackChecksums: s.contentLoader.GetChecksums(),
 		Timestamp:     time.Now(),
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
@@ -83,14 +95,14 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 // handlePrivacy handles GET /privacy
 func (s *Server) handlePrivacy(w http.ResponseWriter, r *http.Request) {
 	privacyContent := buildPrivacyContent()
-	
+
 	// Return as JSON for API consistency
 	response := map[string]interface{}{
 		"title":       "Privacy Notice",
 		"content":     privacyContent,
 		"lastUpdated": time.Now().Format("2006-01-02"),
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)

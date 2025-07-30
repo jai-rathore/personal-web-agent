@@ -26,13 +26,13 @@ func NewGeminiProvider(apiKey string) (*GeminiProvider, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
-	
-	// Use gemini-2.5-pro
-	model := client.GenerativeModel("gemini-2.5-pro")
-	
+
+	// Use gemini-2.5-flash
+	model := client.GenerativeModel("gemini-2.5-flash")
+
 	// Configure model settings - keep it simple
 	model.SetTemperature(0.7)
-	
+
 	// Define tool schema for scheduleCalendlyMeeting
 	model.Tools = []*genai.Tool{
 		{
@@ -58,7 +58,7 @@ func NewGeminiProvider(apiKey string) (*GeminiProvider, error) {
 			},
 		},
 	}
-	
+
 	return &GeminiProvider{
 		client: client,
 		model:  model,
@@ -68,9 +68,9 @@ func NewGeminiProvider(apiKey string) (*GeminiProvider, error) {
 // ClassifyIntent classifies the user's intent
 func (p *GeminiProvider) ClassifyIntent(ctx context.Context, message string) (*types.Intent, error) {
 	// Create a separate model without tools for classification
-	classifierModel := p.client.GenerativeModel("gemini-2.5-pro")
+	classifierModel := p.client.GenerativeModel("gemini-2.5-flash")
 	classifierModel.SetTemperature(0.3)
-	
+
 	prompt := fmt.Sprintf(`Classify the following user message into one of these intents:
 - qa_about_jai: Questions about Jai's background, experience, skills, work, projects
 - schedule_meeting: Requests to book, schedule, or arrange meetings with Jai
@@ -80,24 +80,24 @@ func (p *GeminiProvider) ClassifyIntent(ctx context.Context, message string) (*t
 Message: "%s"
 
 Respond with a JSON object: {"type": "intent_type", "confidence": 0.0-1.0}`, message)
-	
+
 	resp, err := classifierModel.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
 		return nil, fmt.Errorf("failed to classify intent: %w", err)
 	}
-	
+
 	// Extract text from response
 	var textContent string
 	if len(resp.Candidates) == 0 {
 		return nil, fmt.Errorf("no candidates in response")
 	}
-	
+
 	for _, part := range resp.Candidates[0].Content.Parts {
 		if text, ok := part.(genai.Text); ok {
 			textContent += string(text)
 		}
 	}
-	
+
 	// Parse JSON response
 	var intent types.Intent
 	textContent = strings.TrimSpace(textContent)
@@ -105,12 +105,12 @@ Respond with a JSON object: {"type": "intent_type", "confidence": 0.0-1.0}`, mes
 	textContent = strings.TrimPrefix(textContent, "```json")
 	textContent = strings.TrimSuffix(textContent, "```")
 	textContent = strings.TrimSpace(textContent)
-	
+
 	if err := json.Unmarshal([]byte(textContent), &intent); err != nil {
 		log.Warn().Err(err).Str("response", textContent).Msg("Failed to parse intent JSON, defaulting to unknown")
 		return &types.Intent{Type: "unknown", Confidence: 0.5}, nil
 	}
-	
+
 	return &intent, nil
 }
 
@@ -118,7 +118,7 @@ Respond with a JSON object: {"type": "intent_type", "confidence": 0.0-1.0}`, mes
 func (p *GeminiProvider) StreamChat(ctx context.Context, messages []types.ChatMessage, systemPrompt string) (<-chan StreamResponse, error) {
 	// Start chat session with empty history
 	session := p.model.StartChat()
-	
+
 	// Get the last user message
 	var lastUserMessage string
 	for i := len(messages) - 1; i >= 0; i-- {
@@ -127,28 +127,28 @@ func (p *GeminiProvider) StreamChat(ctx context.Context, messages []types.ChatMe
 			break
 		}
 	}
-	
+
 	// Combine system prompt with user message for proper context
 	if systemPrompt != "" && lastUserMessage != "" {
 		lastUserMessage = systemPrompt + "\n\nUser: " + lastUserMessage
 	}
-	
+
 	// Create response channel
 	respChan := make(chan StreamResponse)
-	
+
 	// Start streaming
 	go func() {
 		defer close(respChan)
-		
+
 		// Log what we're sending
 		log.Debug().
 			Str("lastUserMessage", lastUserMessage).
 			Int("historyLength", len(session.History)).
 			Msg("Starting stream with Gemini")
-		
+
 		// Use streaming API for real-time token streaming
 		stream := session.SendMessageStream(ctx, genai.Text(lastUserMessage))
-		
+
 		for {
 			response, err := stream.Next()
 			if err == iterator.Done {
@@ -163,7 +163,7 @@ func (p *GeminiProvider) StreamChat(ctx context.Context, messages []types.ChatMe
 				respChan <- StreamResponse{Error: err}
 				return
 			}
-			
+
 			// Process each streaming chunk and send it immediately
 			for _, cand := range response.Candidates {
 				for _, part := range cand.Content.Parts {
@@ -181,7 +181,7 @@ func (p *GeminiProvider) StreamChat(ctx context.Context, messages []types.ChatMe
 								params[k] = v
 							}
 						}
-						
+
 						respChan <- StreamResponse{
 							Type: "tool_call",
 							Tool: &types.Tool{
@@ -197,10 +197,10 @@ func (p *GeminiProvider) StreamChat(ctx context.Context, messages []types.ChatMe
 
 		// Original streaming code (commented out for now)
 		/*
-		... streaming code removed for brevity ...
+			... streaming code removed for brevity ...
 		*/
 	}()
-	
+
 	return respChan, nil
 }
 

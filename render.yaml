@@ -32,3 +32,15 @@ services:
         value: ../content
       - key: TZ
         value: America/Los_Angeles
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: FEEDBACK_EMAIL
+        sync: false
