@@ -36,8 +36,8 @@ const ChatShell: React.FC = () => {
     // Add user message
     addMessage({ role: 'user', content });
     
-    // Transition from idle to chatting state
-    if (state === 'idle') {
+    // Transition from idle to chatting state, or reset from guardrail state
+    if (state === 'idle' || state === 'guardrail') {
       setState('chatting');
     }
 
