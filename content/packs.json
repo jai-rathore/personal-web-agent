@@ -2,8 +2,31 @@
   "packs": [
     {
       "id": "resume",
-      "path": "content/jai_rathore_resume.md",
-      "topicHints": ["resume", "work", "experience", "skills", "projects", "background", "career", "education", "tesla", "ai", "engineering", "software"]
+      "category": "background",
+      "path": "content/resume/jai_rathore_resume.md",
+      "topicHints": ["resume", "work", "experience", "skills", "projects", "background", "career", "education", "tesla", "ai", "engineering", "software", "job", "employment", "history"],
+      "visibility": "always"
+    },
+    {
+      "id": "bio",
+      "category": "background",
+      "path": "content/bio/bio.md",
+      "topicHints": ["about", "personal", "bio", "who", "hobbies", "interests", "personality", "communication", "contact", "links", "location", "background"],
+      "visibility": "always"
+    },
+    {
+      "id": "project_web_agent",
+      "category": "projects",
+      "path": "content/projects/personal_web_agent.md",
+      "topicHints": ["personal web agent", "this website", "this project", "jairathore.com", "portfolio site", "tech stack", "how was this built", "website", "adk", "fastapi"],
+      "visibility": "on_demand"
+    },
+    {
+      "id": "project_fluxbot",
+      "category": "projects",
+      "path": "content/projects/fluxbot.md",
+      "topicHints": ["fluxbot", "rag", "factory", "knowledge base", "retrieval", "documents", "equipment", "manuals", "vector", "pgvector", "tesla factory"],
+      "visibility": "on_demand"
     }
   ]
 }

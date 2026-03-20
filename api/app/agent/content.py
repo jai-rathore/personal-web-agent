@@ -6,15 +6,20 @@ import logging
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 log = logging.getLogger(__name__)
+
+Visibility = Literal["always", "on_demand"]
 
 
 @dataclass
 class ContentPack:
     id: str
     path: str
+    category: str
     topic_hints: list[str]
+    visibility: Visibility
     content: str = field(default="", repr=False)
 
 
@@ -33,7 +38,6 @@ class ContentLoader:
 
         for raw in data.get("packs", []):
             pack_path = Path(raw["path"])
-            # Support both absolute and relative (relative = from repo root)
             if not pack_path.is_absolute():
                 pack_path = self._dir.parent / raw["path"]
 
@@ -45,11 +49,19 @@ class ContentLoader:
             pack = ContentPack(
                 id=raw["id"],
                 path=str(pack_path),
+                category=raw.get("category", "general"),
                 topic_hints=raw.get("topicHints", []),
+                visibility=raw.get("visibility", "always"),
                 content=content,
             )
             self._packs[pack.id] = pack
-            log.info("Loaded content pack '%s' (%d chars)", pack.id, len(content))
+            log.info(
+                "Loaded content pack '%s' (category=%s, visibility=%s, %d chars)",
+                pack.id,
+                pack.category,
+                pack.visibility,
+                len(content),
+            )
 
     def get_pack(self, pack_id: str) -> ContentPack | None:
         return self._packs.get(pack_id)
@@ -58,11 +70,32 @@ class ContentLoader:
         return list(self._packs.values())
 
     def build_context_block(self) -> str:
-        """Return all pack content formatted for injection into a system prompt."""
+        """Return 'always'-visible pack content for injection into the system prompt."""
         blocks = []
         for pack in self._packs.values():
-            blocks.append(f"## {pack.id.upper()} CONTEXT\n\n{pack.content}")
+            if pack.visibility == "always":
+                blocks.append(f"## {pack.id.upper()} CONTEXT\n\n{pack.content}")
         return "\n\n---\n\n".join(blocks)
+
+    def search_packs(self, topic: str) -> list[ContentPack]:
+        """Find content packs whose topic hints match the query.
+
+        Matches are scored by the number of hint tokens found in the topic string.
+        Returns all on_demand packs with at least one match, sorted by score.
+        Always-visible packs are excluded (they're already in the system prompt).
+        """
+        topic_lower = topic.lower()
+        scored: list[tuple[int, ContentPack]] = []
+
+        for pack in self._packs.values():
+            if pack.visibility != "on_demand":
+                continue
+            score = sum(1 for hint in pack.topic_hints if hint.lower() in topic_lower)
+            if score > 0:
+                scored.append((score, pack))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [pack for _, pack in scored]
 
     @property
     def checksums(self) -> dict[str, int]:

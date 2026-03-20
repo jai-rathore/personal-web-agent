@@ -1,6 +1,11 @@
 """Public tools – available to all users, no authentication required."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.agent.content import ContentLoader
+
 
 def schedule_calendly_meeting(meeting_type: str, requestor_name: str = "") -> dict:
     """Provide Jai's Calendly link for scheduling a 30-minute meeting.
@@ -51,3 +56,40 @@ def get_contact_info(info_type: str = "all") -> dict:
         "status": "error",
         "message": f"Unknown info_type '{info_type}'. Use: email, linkedin, twitter, or all.",
     }
+
+
+def make_lookup_knowledge_tool(content_loader: "ContentLoader"):
+    """Return a lookup_knowledge function closed over the given ContentLoader."""
+
+    def lookup_knowledge(topic: str) -> dict:
+        """Search Jai's knowledge base for detailed information on a specific topic or project.
+
+        Use this tool when a visitor or Jai asks about a specific project, experience, or
+        topic that requires more depth than what is available in the base context.
+        Examples: 'Tell me more about FluxBot', 'How was this website built?',
+        'What is the personal web agent?'
+
+        Args:
+            topic: The topic or project to look up (e.g. 'FluxBot', 'personal web agent').
+
+        Returns:
+            A dict with the matching content, or a message indicating nothing was found.
+        """
+        packs = content_loader.search_packs(topic)
+        if not packs:
+            return {
+                "status": "not_found",
+                "message": f"No detailed content found for '{topic}'. Answer based on your existing context.",
+            }
+
+        results = []
+        for pack in packs:
+            results.append({
+                "id": pack.id,
+                "category": pack.category,
+                "content": pack.content,
+            })
+
+        return {"status": "success", "results": results}
+
+    return lookup_knowledge
