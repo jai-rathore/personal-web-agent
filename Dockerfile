@@ -1,58 +1,53 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
+# ── Python 3.12 slim base ─────────────────────────────────────────────────────
+FROM python:3.12-slim AS base
 
-# Install ca-certificates for SSL
-RUN apk --no-cache add ca-certificates
+# Install system deps + Node.js (for gws CLI)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g @googleworkspace/cli \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+# ── Python dependencies ───────────────────────────────────────────────────────
+FROM base AS deps
 
-# Copy go mod files
-COPY api/go.mod api/go.sum ./
+WORKDIR /build
+COPY api/requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Download dependencies
-RUN go mod download
-
-# Copy source code
-COPY api/ ./
-
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
-
-# Final stage
-FROM alpine:latest
-
-# Install ca-certificates for SSL
-RUN apk --no-cache add ca-certificates tzdata
+# ── Final runtime image ───────────────────────────────────────────────────────
+FROM deps AS runtime
 
 # Create non-root user
-RUN adduser -D -s /bin/sh appuser
+RUN useradd -r -s /bin/false appuser
 
 WORKDIR /app
 
-# Copy binary from builder stage
-COPY --from=builder /app/main .
+# Copy application code
+COPY api/app ./app
 
-# Copy content directory
-COPY content/ ./content/
+# Copy content packs
+COPY content ./content
 
-# Change ownership to non-root user
+# Fix ownership
 RUN chown -R appuser:appuser /app
 
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8080
 
-# Set environment variables
 ENV PORT=8080
 ENV CONTENT_DIR=./content
 ENV TZ=America/Los_Angeles
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/healthz || exit 1
 
-# Run the application
-CMD ["./main"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

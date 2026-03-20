@@ -8,49 +8,52 @@ on:
 
 jobs:
   backend-test:
-    name: Backend Tests
+    name: Backend Tests (Python)
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Go
-      uses: actions/setup-go@v5
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
       with:
-        go-version: '1.21'
-        
-    - name: Cache Go modules
+        python-version: '3.12'
+
+    - name: Cache pip
       uses: actions/cache@v4
       with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('api/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-go-
-          
-    - name: Run backend tests
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
       run: |
         cd api
-        go mod download
-        go test -v -race -coverprofile=coverage.out ./...
-        
-    - name: Upload coverage
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-coverage
-        path: api/coverage.out
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio
+
+    - name: Run backend tests
+      env:
+        GOOGLE_API_KEY: test-key
+        GOOGLE_GENAI_USE_VERTEXAI: "FALSE"
+        CONTENT_DIR: ../content
+      run: |
+        cd api
+        python -m pytest tests/ -v
 
   frontend-test:
     name: Frontend Tests
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        
+
     - name: Cache node modules
       uses: actions/cache@v4
       with:
@@ -58,27 +61,27 @@ jobs:
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
-          
+
     - name: Install dependencies
       run: |
         cd web
         npm ci
-        
+
     - name: Run linter
       run: |
         cd web
         npm run lint || true
-        
+
     - name: Type check
       run: |
         cd web
         npm run type-check || npx tsc --noEmit || true
-        
+
     - name: Build frontend
       run: |
         cd web
         npm run build
-        
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -88,22 +91,17 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Run Gosec Security Scanner
-      uses: securego/gosec@master
-      with:
-        args: '-no-fail -fmt sarif -out gosec-results.sarif ./api/...'
-        
-    - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: gosec-results.sarif
-        
+
     - name: Run npm audit
       run: |
         cd web
         npm audit --production || true
+
+    - name: Run pip-audit
+      run: |
+        pip install pip-audit
+        cd api
+        pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-42969 || true

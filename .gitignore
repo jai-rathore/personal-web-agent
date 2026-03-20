@@ -1,20 +1,22 @@
-# Go binaries
+# Python
+api/.venv/
+api/__pycache__/
+api/**/__pycache__/
+api/**/*.pyc
+api/.pytest_cache/
+api/**/.pytest_cache/
+*.pyc
+*.pyo
+__pycache__/
+
+# Legacy Go artifacts (kept for git history reference)
 api/bin/
-api/test-server
 bin/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Go test and coverage
-*.test
-*.out
-coverage.txt
-coverage.html
-
-# Go vendor directory
 vendor/
 
 # Node modules

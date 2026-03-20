@@ -1,107 +1,107 @@
-.PHONY: help build run test clean dev deps tidy build-web dev-web test-web install
+.PHONY: help build run dev test clean deps install setup-gws
 
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  build    - Build both backend and frontend"
-	@echo "  run      - Run the backend application"
-	@echo "  dev      - Run both frontend and backend in development mode"
-	@echo "  test     - Run all tests"
-	@echo "  clean    - Clean all build artifacts"
-	@echo "  deps     - Download all dependencies"
-	@echo "  tidy     - Tidy up go.mod"
+	@echo "  build      - Build all"
+	@echo "  run        - Run the backend"
+	@echo "  dev        - Run backend + frontend in dev mode"
+	@echo "  test       - Run all tests"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  deps       - Install all dependencies"
+	@echo "  setup-gws  - Install gws CLI for Google Workspace tools"
 	@echo ""
 	@echo "Backend specific:"
-	@echo "  build-api - Build the backend"
-	@echo "  run-api   - Run the backend"
-	@echo "  test-api  - Run backend tests"
+	@echo "  build-api  - Install Python deps"
+	@echo "  run-api    - Run the FastAPI backend (production mode)"
+	@echo "  dev-api    - Run the FastAPI backend (hot-reload dev mode)"
+	@echo "  test-api   - Run backend tests"
 	@echo ""
 	@echo "Frontend specific:"
-	@echo "  build-web - Build the frontend"
-	@echo "  dev-web   - Run frontend dev server"
-	@echo "  test-web  - Run frontend tests"
+	@echo "  build-web  - Build the frontend"
+	@echo "  dev-web    - Run frontend dev server"
+	@echo "  test-web   - Run frontend type check / lint"
 
-# Build the application
+# ── Build ─────────────────────────────────────────────────────────────────────
+
 build: build-api build-web
 
 build-api:
-	@echo "Building backend..."
-	cd api && go build -o ../bin/server ./cmd/server
+	@echo "Installing Python backend dependencies..."
+	cd api && pip install -r requirements.txt
 
 build-web:
 	@echo "Building frontend..."
 	cd web && npm run build
 
-# Run the application
+# ── Run ───────────────────────────────────────────────────────────────────────
+
 run: run-api
 
-run-api: build-api
-	@echo "Running backend..."
-	./bin/server
+run-api:
+	@echo "Running backend (production)..."
+	cd api && uvicorn app.main:app --host 0.0.0.0 --port $${PORT:-8080}
 
-# Development mode
+# ── Development ───────────────────────────────────────────────────────────────
+
 dev:
 	@echo "Starting development servers..."
-	@echo "Backend: http://localhost:8080"
+	@echo "Backend:  http://localhost:8080"
 	@echo "Frontend: http://localhost:5173"
 	@make -j2 dev-api dev-web
 
 dev-api:
-	@if command -v air > /dev/null 2>&1; then \
-		cd api && air -c ../.air.toml; \
-	else \
-		echo "Air not installed. Install with: go install github.com/cosmtrek/air@latest"; \
-		echo "Running without auto-reload..."; \
-		$(MAKE) run-api; \
-	fi
+	@echo "Running backend with hot-reload..."
+	cd api && uvicorn app.main:app --host 0.0.0.0 --port $${PORT:-8080} --reload
 
 dev-web:
 	cd web && npm run dev
 
-# Run tests
+# ── Tests ─────────────────────────────────────────────────────────────────────
+
 test: test-api test-web
 
 test-api:
 	@echo "Running backend tests..."
-	cd api && go test -v ./...
+	cd api && python -m pytest tests/ -v
 
 test-web:
-	@echo "Running frontend tests..."
+	@echo "Running frontend checks..."
 	cd web && npm run lint || true
 	cd web && npm run type-check || npx tsc --noEmit || true
 
-# Clean build artifacts
-clean:
-	@echo "Cleaning..."
-	rm -rf bin/ web/dist/ web/node_modules/
-	cd api && go clean
+# ── Deps ──────────────────────────────────────────────────────────────────────
 
-# Download dependencies
 deps: deps-api deps-web
 
 deps-api:
-	@echo "Downloading backend dependencies..."
-	cd api && go mod download
+	@echo "Installing Python dependencies..."
+	cd api && pip install -r requirements.txt
 
 deps-web:
 	@echo "Installing frontend dependencies..."
 	cd web && npm ci
 
-# Install all dependencies (alias for deps)
 install: deps
 
-# Tidy up go.mod
-tidy:
-	@echo "Tidying go.mod..."
-	cd api && go mod tidy
+# ── Google Workspace CLI ──────────────────────────────────────────────────────
 
-# Initialize the project (first time setup)
-init: deps tidy
-	@echo "Initializing project..."
-	mkdir -p bin
-	@echo "Project initialized. Copy .env.example to .env and configure your environment variables."
+setup-gws:
+	@echo "Installing gws CLI (Google Workspace CLI)..."
+	npm install -g @googleworkspace/cli
+	@echo "Run 'gws auth setup' to authenticate with your Google account."
 
-# Docker commands
+# ── Clean ─────────────────────────────────────────────────────────────────────
+
+clean:
+	@echo "Cleaning..."
+	rm -rf web/dist/ web/node_modules/
+	find api -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find api -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
+	find api -name "*.pyc" -delete 2>/dev/null || true
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+
 docker-build:
 	@echo "Building Docker image..."
 	docker build -t personal-web-agent-api .

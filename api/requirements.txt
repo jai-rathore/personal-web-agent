@@ -1,0 +1,24 @@
+# Google ADK (includes fastapi, uvicorn, authlib, google-api-python-client, pydantic)
+google-adk>=1.18.0
+
+# Pydantic Settings (not bundled by ADK)
+pydantic-settings>=2.7.0
+
+# JWT session tokens
+python-jose[cryptography]>=3.3.0
+
+# Rate limiting
+slowapi>=0.1.9
+
+# Async email
+aiosmtplib>=3.0.0
+
+# HTTP client (for OAuth2 token exchange)
+httpx>=0.28.0
+
+# Async file I/O
+aiofiles>=24.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.24.0

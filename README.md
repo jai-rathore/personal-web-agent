@@ -1,429 +1,288 @@
 # Jai's Personal Web Agent
 
-A modern, AI-powered personal website that serves as an interactive introduction to Jai Rathore. Chat with an intelligent agent to learn about Jai's background, skills, experience, and schedule meetings seamlessly.
+An AI-powered personal website that lets visitors chat with an intelligent agent to learn about Jai Rathore's background, skills, and projects – and lets Jai himself manage his Google Workspace (calendar, mail) through the same interface.
 
-## 🌟 Features
-
-- **Interactive AI Chat**: Powered by Google Gemini, ask questions about Jai's professional background
-- **Intelligent Responses**: Context-aware responses about skills, experience, and projects  
-- **Meeting Scheduling**: Direct integration with Calendly for easy meeting booking
-- **Responsive Design**: Optimized for both desktop and mobile experiences
-- **Real-time Streaming**: Server-sent events for smooth, real-time conversation flow
-- **Content Security**: Built-in guardrails and rate limiting for safe interactions
-
-## 🚀 Live Demo
-
-Visit the live application at: **[jairathore.com](https://jairathore.com)**
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React** with TypeScript
-- **Vite** for fast development and building
-- **Tailwind CSS** for responsive styling
-- **Zustand** for state management
-
-### Backend  
-- **Go** with Gorilla Mux for HTTP routing
-- **Google Gemini AI** for natural language processing
-- **Server-Sent Events** for real-time streaming
-- **Comprehensive middleware** for logging, security, and rate limiting
-
-### Infrastructure
-- **Frontend**: Deployed on [Vercel](https://vercel.com)
-- **Backend**: Deployed on [Render](https://render.com)
-- **Domain**: Custom domain with SSL
-- **CI/CD**: GitHub Actions for automated testing and deployment
-
-## 📁 Project Structure
-
-```
-├── api/                 # Go backend application
-│   ├── cmd/server/      # Application entry point
-│   ├── internal/        # Internal packages
-│   └── README.md        # Backend documentation
-├── web/                 # React frontend application  
-│   ├── src/             # Source code
-│   └── README.md        # Frontend documentation
-├── content/             # Content and data files
-├── .github/workflows/   # GitHub Actions CI/CD
-└── docs/                # Additional documentation
-```
-
-## 🔧 Development
-
-For detailed development instructions, see:
-- [Backend Documentation](./api/README.md)
-- [Frontend Documentation](./web/README.md)
-
-### Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/jai-rathore/personal-web-agent.git
-cd personal-web-agent
-
-# Install dependencies
-make install
-
-# Start development servers
-make dev
-```
-
-## 🚀 Deployment
-
-This project uses automated CI/CD with GitHub Actions:
-
-- **Continuous Integration**: Runs tests, linting, and security scans on every push
-- **Automated Deployment**: Deploys to production on pushes to `main` branch
-- **Health Checks**: Post-deployment verification of both frontend and backend
-- **Dependency Updates**: Weekly automated dependency update PRs
-
-## 🔒 Security Features
-
-- Content Security Policy (CSP) headers
-- CORS configuration for cross-origin requests
-- Rate limiting for API endpoints
-- Input validation and sanitization
-- Security scanning in CI/CD pipeline
-
-## 📊 Monitoring
-
-- Request logging with unique IDs
-- Performance metrics and timing
-- Error tracking and alerting
-- Health check endpoints
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `make test`
-5. Submit a pull request
-
-## 📞 Contact
-
-- **Website**: [jairathore.com](https://jairathore.com)
-- **Email**: [jaiadityarathore@gmail.com](mailto:jaiadityarathore@gmail.com)
-- **LinkedIn**: [linkedin.com/in/jrathore](https://www.linkedin.com/in/jrathore)
-- **GitHub**: [github.com/jai-rathore](https://github.com/jai-rathore)
-- **X/Twitter**: [@Jai_A_Rathore](https://x.com/Jai_A_Rathore)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Live at [jairathore.com](https://jairathore.com)**
 
 ---
 
-*Built with ❤️ by Jai Rathore*
+## Features
 
-- **Chat API**: Real-time streaming chat responses via Server-Sent Events (SSE) with loading spinner UX
-- **Gemini 2.5 Pro Integration**: Uses Google's Gemini 2.5 Pro API for chat, classification, and tool reasoning
-- **Calendly Integration**: Provides direct Calendly links for easy meeting scheduling
-- **Content System**: Loads and serves information from resume and other content packs
-- **Security**: Rate limiting, CORS, CSP headers, input validation, and guardrails
-- **Health Monitoring**: Health check endpoint with pack checksums
-- **Privacy Compliant**: Privacy endpoint and minimal data retention
+- **Interactive AI Chat** – Powered by Google Gemini 3.1 Pro via the ADK framework
+- **Real-time Streaming** – Server-Sent Events for smooth, token-by-token responses
+- **Meeting Scheduling** – Direct Calendly integration for booking 30-minute meetings
+- **Owner Mode** – When Jai signs in with Google, he gets additional workspace tools (calendar, Gmail) powered by the Google Workspace CLI
+- **Guardrails** – Multi-layer input validation and prompt injection protection
+- **Feedback Form** – Async email delivery via SMTP
 
-## Architecture
+---
+
+## Tech Stack
+
+### Frontend
+- **React 18** + TypeScript
+- **Vite 5** for build tooling
+- **Tailwind CSS** for styling
+- **Zustand** for state management
+
+### Backend
+- **Python 3.12** + **FastAPI** + Uvicorn
+- **Google ADK** (`google-adk`) for agent orchestration
+- **Gemini 3.1 Pro Preview** as the chat model
+- **Google Workspace CLI** (`gws`) for owner calendar/Gmail tools
+- **SlowAPI** for rate limiting
+- **Pydantic Settings** for configuration
+
+### Infrastructure
+| Component | Platform | URL |
+|---|---|---|
+| Frontend | [Vercel](https://vercel.com) | [jairathore.com](https://jairathore.com) |
+| Backend API | [Render](https://render.com) | personal-web-agent.onrender.com |
+| Domain / SSL | Vercel / Render | Automatic |
+| CI/CD | GitHub Actions | On push to `main` |
+
+---
+
+## Deployment Architecture
 
 ```
-api/
-├── cmd/server/main.go              # Application entry point
-├── internal/
-│   ├── config/config.go            # Environment configuration
-│   ├── server/                     # HTTP server and middleware
-│   │   ├── middleware.go           # Security, logging, rate limiting
-│   │   └── routes.go               # Route definitions
-│   ├── chat/handler.go             # SSE streaming chat handler with Calendly integration
-│   ├── content/loader.go           # Content pack system
-│   ├── guardrails/pipeline.go      # Security guardrails
-│   ├── providers/                  # External API providers
-│   │   └── gemini.go              # Gemini AI client
-│   ├── types/types.go              # Data structures
-│   └── utils/http.go               # HTTP utilities
-├── go.mod                          # Go dependencies
-└── go.sum
-content/
-├── packs.json                      # Content manifest
-└── jai_rathore_resume.md           # Jai's resume content
+Push to main branch
+        │
+        ├─── GitHub Actions CI (ci.yml)
+        │         ├── Python tests (pytest)
+        │         ├── Frontend type-check + build
+        │         └── pip-audit / npm audit
+        │
+        └─── GitHub Actions Deploy (deploy.yml)
+                  │
+                  ├── Backend → Render
+                  │     Service: personal-web-agent-api
+                  │     Runtime: Python 3.12
+                  │     Build:   pip install -r requirements.txt
+                  │     Start:   uvicorn app.main:app
+                  │     Triggered via Render API (RENDER_API_KEY secret)
+                  │
+                  └── Frontend → Vercel
+                        Build:   npm run build (Vite)
+                        Output:  web/dist/
+                        Triggered via Vercel CLI (VERCEL_TOKEN secret)
 ```
 
-## Quick Start
+### Required GitHub Secrets
+
+| Secret | Used for |
+|---|---|
+| `RENDER_API_KEY` | Trigger Render deployments |
+| `RENDER_SERVICE_ID` | ID of the Render backend service |
+| `VERCEL_TOKEN` | Vercel CLI authentication |
+| `VERCEL_ORG_ID` | Vercel organization |
+| `VERCEL_PROJECT_ID` | Vercel project |
+
+### Render Environment Variables
+
+Set these in the Render dashboard for `personal-web-agent-api`:
+
+| Variable | Value |
+|---|---|
+| `GOOGLE_API_KEY` | Your Gemini API key |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID (for owner sign-in) |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret |
+| `SMTP_PASSWORD` | Gmail app password for feedback emails |
+| All others | Pre-configured in `render.yaml` |
+
+---
+
+## Project Structure
+
+```
+personal-web-agent/
+├── api/                        # Python FastAPI backend
+│   ├── app/
+│   │   ├── main.py             # FastAPI app, middleware, lifespan
+│   │   ├── config.py           # Pydantic Settings (env vars)
+│   │   ├── dependencies.py     # FastAPI dependency injection
+│   │   ├── agent/
+│   │   │   ├── agent.py        # ADK Agent definition (public + owner modes)
+│   │   │   ├── content.py      # Content pack loader
+│   │   │   ├── guardrails.py   # Input validation, blocked patterns
+│   │   │   └── tools/
+│   │   │       ├── public.py   # schedule_calendly_meeting, get_contact_info
+│   │   │       └── workspace.py # Google Calendar + Gmail tools (gws CLI)
+│   │   ├── routers/
+│   │   │   ├── chat.py         # POST /chat – SSE streaming
+│   │   │   ├── auth.py         # GET /auth/google, /auth/me, POST /auth/logout
+│   │   │   ├── health.py       # GET /healthz, GET /privacy
+│   │   │   └── feedback.py     # POST /feedback
+│   │   ├── services/
+│   │   │   ├── auth_service.py # Google OAuth2 token exchange + JWT sessions
+│   │   │   └── email_service.py # Async SMTP for feedback
+│   │   └── middleware/
+│   │       ├── rate_limit.py   # SlowAPI rate limiter
+│   │       └── security.py     # Security headers
+│   ├── tests/                  # pytest test suite
+│   ├── requirements.txt
+│   └── pyproject.toml
+├── web/                        # React frontend
+│   ├── src/
+│   │   ├── components/         # ChatShell, Header (with sign-in), MessageList…
+│   │   ├── state/
+│   │   │   ├── chatStore.ts    # Zustand chat state
+│   │   │   └── authStore.ts    # Zustand auth state
+│   │   └── lib/sse.ts          # SSE streaming client
+│   └── vercel.json
+├── content/
+│   ├── packs.json              # Content manifest
+│   └── jai_rathore_resume.md   # Resume content fed to the agent
+├── .github/workflows/
+│   ├── ci.yml                  # Python tests + frontend build
+│   └── deploy.yml              # Render + Vercel deploy on push to main
+├── Dockerfile                  # Python 3.12 + Node.js (for gws CLI)
+├── docker-compose.yml
+├── render.yaml                 # Render IaC config
+└── Makefile
+```
+
+---
+
+## Local Development
 
 ### Prerequisites
 
-- Go 1.21 or later
-- Gemini API key (required)
-- Node.js 18+ and npm (for frontend)
+- Python 3.12+
+- Node.js 20+
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
-### 1. Clone and Setup
+### Setup
 
 ```bash
-git clone <repository-url>
+# 1. Clone
+git clone https://github.com/jai-rathore/personal-web-agent.git
 cd personal-web-agent
-make init
-```
 
-### 2. Environment Configuration
+# 2. Create backend .env
+cp .env.example api/.env
+# Edit api/.env – set GOOGLE_API_KEY at minimum
 
-Copy the example environment file and configure it:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your configuration:
-
-```bash
-# Required
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Server configuration
-PORT=8080
-ALLOWED_ORIGIN=http://localhost:3000
-ENVIRONMENT=development
-
-# Meeting scheduling uses Calendly (no setup required)
-# Direct link: https://calendly.com/jairathore/30min
-```
-
-### 3. Add Your Resume Content
-
-Copy your resume to the content directory:
-
-```bash
-# Resume file already exists at content/jai_rathore_resume.md
-# Edit this file with your resume content
-```
-
-### 4. Run the Full Application
-
-#### Backend (API Server)
-
-```bash
-# Option 1: Using Make (from project root)
-make build && make run
-
-# Option 2: Direct Go commands (from project root)
-cd api && go build -o ../bin/server ./cmd/server
-cd .. && ./bin/server
-
-# Option 3: From api directory
+# 3. Install backend deps
 cd api
-cp ../.env .env  # Copy env file to api directory
-go run ./cmd/server
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Install frontend deps
+cd ../web
+npm ci
 ```
 
-The backend API will be available at `http://localhost:8080`
-
-#### Frontend (React App)
-
-In a new terminal:
+### Running
 
 ```bash
-# Navigate to web directory
-cd web
+# Backend only (from repo root)
+make dev-api       # starts uvicorn with --reload on :8080
 
-# Install dependencies (first time only)
-npm install
+# Frontend only
+make dev-web       # starts Vite on :5173
 
-# Update .env to point to backend
-echo "VITE_API_BASE=http://localhost:8080" > .env
-
-# Start the development server
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173` (Vite's default port)
-
-### 5. Verify Everything is Running
-
-```bash
-# Check backend health
-curl http://localhost:8080/healthz
-
-# Frontend should be accessible at
-open http://localhost:5173
-```
-
-## API Endpoints
-
-### Chat (SSE Streaming)
-```
-POST /chat
-Content-Type: application/json
-
-{
-  "messages": [
-    {"role": "user", "content": "Tell me about Jai's experience"}
-  ],
-  "sessionId": "optional-session-id"
-}
-
-Response: text/event-stream
-```
-
-### Meeting Scheduling
-Meeting scheduling requests automatically respond with Jai's Calendly link for direct booking:
-```
-https://calendly.com/jairathore/30min
-```
-
-### Health Check
-```
-GET /healthz
-
-Response:
-{
-  "status": "healthy",
-  "buildSha": "abc123",
-  "packChecksums": {"resume": "def456"},
-  "timestamp": "2024-01-15T10:00:00Z"
-}
-```
-
-### Privacy Information
-```
-GET /privacy
-
-Response:
-{
-  "title": "Privacy Notice",
-  "content": "...",
-  "lastUpdated": "2024-01-15"
-}
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `PORT` | No | `8080` | Server port |
-| `GEMINI_API_KEY` | Yes | - | Google Gemini API key |
-| `ALLOWED_ORIGIN` | No | `http://localhost:3000` | CORS allowed origin (frontend URL) |
-| `ENVIRONMENT` | No | `development` | Environment (development/production) |
-| `TZ` | No | `America/Los_Angeles` | Timezone |
-
-### Rate Limiting
-
-- Chat endpoint: 60 requests per 5 minutes
-
-## Development
-
-### Commands
-
-```bash
-# Install dependencies
-make deps
-
-# Build application
-make build
-
-# Run application
-make run
-
-# Run with auto-reload (requires air)
+# Both at once
 make dev
+```
 
-# Run tests
-make test
+### Testing
 
-# Clean build artifacts
-make clean
-
-# Tidy go.mod
-make tidy
+```bash
+make test-api      # pytest
+make test-web      # tsc + eslint
 ```
 
 ### Docker
 
 ```bash
-# Build Docker image
-make docker-build
-
-# Run with Docker
-make docker-run
-
-# Or use docker-compose
 docker-compose up
+# API at http://localhost:8080, point your browser at the frontend separately
 ```
 
-### Content Management
+---
 
-Content is managed through the `content/` directory:
+## API Endpoints
 
-- `packs.json`: Defines available content packs
-- `jai_rathore_resume.md`: Jai's resume content
-- Additional content files can be added and referenced in `packs.json`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/healthz` | None | Health + content checksums |
+| `GET` | `/privacy` | None | Privacy notice |
+| `POST` | `/chat` | Optional cookie | SSE streaming chat |
+| `POST` | `/feedback` | None | Submit feedback (email) |
+| `GET` | `/auth/google` | None | Start Google OAuth2 login |
+| `GET` | `/auth/google/callback` | None | OAuth2 callback, sets cookie |
+| `GET` | `/auth/me` | Cookie | Current user info |
+| `POST` | `/auth/logout` | Cookie | Clear session cookie |
 
-## Security Features
+Interactive API docs (dev only): `http://localhost:8080/docs`
 
-- **Input Validation**: Comprehensive input sanitization and validation
-- **Rate Limiting**: IP-based rate limiting for all endpoints
-- **CORS**: Strict CORS policy for allowed origins
-- **CSP Headers**: Content Security Policy headers
-- **Guardrails**: Multi-layer filtering to prevent prompt injection and off-topic responses
-- **Tool Validation**: Strict validation of AI tool calls
-- **Content Validation**: Ensures responses stay grounded in provided content
+### Chat request format
 
-## Monitoring
+```json
+POST /chat
+{ "messages": [{"role": "user", "content": "What does Jai do at Tesla?"}], "sessionId": "optional" }
+```
 
-### Health Checks
+Response is an SSE stream:
+```
+data: {"type": "connected"}
+data: {"type": "text", "role": "assistant", "content": "Jai is a Staff Software Engineer..."}
+data: {"type": "tool_call", "role": "assistant", "tool": {"name": "schedule_calendly_meeting", ...}}
+```
 
-The `/healthz` endpoint provides:
-- Service status
-- Build SHA for deployment tracking
-- Content pack checksums for cache invalidation
-- Timestamp
+---
 
-### Logging
+## Owner Mode (Google Workspace)
 
-Structured JSON logging with:
-- Request IDs for tracing
-- Performance metrics
-- Security events
-- Error details
+When Jai signs in with Google (the sign-in button in the header), he gets access to additional workspace tools:
 
-## Production Deployment
+- **Calendar** – list events, create, update, delete
+- **Gmail** – list, search, read, send emails
 
-### Required Environment Variables
+These tools are backed by the [Google Workspace CLI (`gws`)](https://github.com/googleworkspace/cli). To enable this locally:
 
 ```bash
-ENVIRONMENT=production
-GEMINI_API_KEY=<your-production-key>
-ALLOWED_ORIGIN=<your-frontend-domain>
-BUILD_SHA=<deployment-commit-sha>
+# Install gws CLI
+make setup-gws
+
+# Authenticate with your Google account
+gws auth setup
 ```
 
-### Security Checklist
+The `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env vars must be set (from a Google Cloud OAuth2 Web Application credential) for the sign-in flow to work.
 
-- [ ] All API keys stored in secure secret management
-- [ ] HTTPS enabled with proper certificates
-- [ ] CORS configured for production domain only
-- [ ] Rate limits appropriate for expected traffic
-- [ ] Monitoring and alerting configured
-- [ ] Log retention policies in place
+---
 
-## Troubleshooting
+## Environment Variables
 
-### Common Issues
+| Variable | Required | Description |
+|---|---|---|
+| `GOOGLE_API_KEY` | Yes | Gemini API key from AI Studio |
+| `GOOGLE_GENAI_USE_VERTEXAI` | No | Set `TRUE` to use Vertex AI instead |
+| `CHAT_MODEL` | No | Defaults to `gemini-3.1-pro-preview` |
+| `FAST_MODEL` | No | Defaults to `gemini-3.1-flash-lite-preview` |
+| `ALLOWED_ORIGIN` | Yes (prod) | Frontend URL for CORS |
+| `GOOGLE_CLIENT_ID` | Optional | Enables Google sign-in / owner mode |
+| `GOOGLE_CLIENT_SECRET` | Optional | Enables Google sign-in / owner mode |
+| `GOOGLE_REDIRECT_URI` | Optional | OAuth2 callback URL |
+| `OWNER_EMAILS` | Optional | Comma-separated emails with workspace access |
+| `JWT_SECRET` | Optional | Secret for session tokens (auto-generated if unset) |
+| `SMTP_USERNAME` | Optional | Gmail address for feedback emails |
+| `SMTP_PASSWORD` | Optional | Gmail app password |
 
-1. **Build fails**: Ensure Go 1.21+ is installed and `go mod tidy` has been run
-2. **Rate limiting too aggressive**: Adjust rate limit environment variables
-3. **CORS errors**: Check `ALLOWED_ORIGIN` matches your frontend domain
-4. **Meeting scheduling not working**: Calendly link is hard-coded to https://calendly.com/jairathore/30min
+Full list in [`.env.example`](.env.example).
 
-### Debug Mode
+---
 
-Set `ENVIRONMENT=development` for:
-- Detailed error messages
-- More verbose logging
-- Relaxed validation (where appropriate)
+## Contact
 
-## License
+- **Website**: [jairathore.com](https://jairathore.com)
+- **Email**: [jaiadityarathore@gmail.com](mailto:jaiadityarathore@gmail.com)
+- **LinkedIn**: [linkedin.com/in/jrathore](https://www.linkedin.com/in/jrathore)
+- **X**: [@Jai_A_Rathore](https://x.com/Jai_A_Rathore)
 
-This project is part of Jai's personal web presence. Please contact for usage permissions.
+---
+
+*Built by Jai Rathore*

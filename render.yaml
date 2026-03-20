@@ -1,10 +1,10 @@
 services:
   - type: web
     name: personal-web-agent-api
-    runtime: go
+    runtime: python
     rootDir: api
-    buildCommand: go build -o bin/server ./cmd/server
-    startCommand: ./bin/server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: PORT
         value: 8080
@@ -14,24 +14,42 @@ services:
         generateValue: true
       - key: ALLOWED_ORIGIN
         value: https://personal-web-agent.vercel.app
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: CHAT_RATE_LIMIT
-        value: 60
-      - key: CHAT_RATE_WINDOW
-        value: 5m
-      - key: ACTION_RATE_LIMIT
-        value: 5
-      - key: ACTION_RATE_WINDOW
-        value: 10m
-      - key: REQUEST_TIMEOUT
-        value: 30s
-      - key: SSE_TIMEOUT
-        value: 5m
       - key: CONTENT_DIR
         value: ../content
       - key: TZ
         value: America/Los_Angeles
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Google Gemini / ADK
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GOOGLE_GENAI_USE_VERTEXAI
+        value: "FALSE"
+      - key: CHAT_MODEL
+        value: gemini-3.1-pro-preview
+      - key: FAST_MODEL
+        value: gemini-3.1-flash-lite-preview
+      # Google OAuth2 (owner workspace access)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://personal-web-agent-api.onrender.com/auth/google/callback
+      - key: OWNER_EMAILS
+        value: jaiadityarathore@gmail.com
+      - key: JWT_SECRET
+        generateValue: true
+      # Rate limiting
+      - key: CHAT_RATE_LIMIT
+        value: 60
+      - key: CHAT_RATE_WINDOW
+        value: 300
+      - key: ACTION_RATE_LIMIT
+        value: 5
+      - key: ACTION_RATE_WINDOW
+        value: 600
+      # SMTP (feedback)
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

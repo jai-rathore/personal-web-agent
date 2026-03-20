@@ -24,6 +24,7 @@ export class SSEClient {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Send session cookie for owner workspace access
         body: JSON.stringify({
           messages,
           sessionId,
