@@ -96,17 +96,14 @@ async def _stream_agent(
             app_name=APP_NAME, user_id=user_id, session_id=session_id
         )
 
-    # ── 3. Build agent (inject access_token into tool closures if owner) ────
+    # ── 3. Build agent ───────────────────────────────────────────────────────
     content_loader = get_content_loader(settings.content_dir)
     agent = create_agent(
         content_loader=content_loader,
         is_owner=is_owner,
         chat_model=settings.chat_model,
+        access_token=user.access_token if (is_owner and user) else "",
     )
-
-    # If owner, bind access_token as a partial for workspace tools
-    if is_owner and user and user.access_token:
-        _patch_workspace_tools(agent, user.access_token)
 
     runner = Runner(
         agent=agent,
@@ -151,32 +148,6 @@ async def _stream_agent(
     except Exception as exc:
         log.exception("Error during agent streaming: %s", exc)
         yield _sse({"type": "error", "role": "assistant", "content": "An error occurred."})
-
-
-def _patch_workspace_tools(agent: object, access_token: str) -> None:
-    """Inject the OAuth2 access_token into all workspace tool default args."""
-    import functools
-
-    workspace_tool_names = {
-        "list_calendar_events", "create_calendar_event", "update_calendar_event",
-        "delete_calendar_event", "list_emails", "get_email", "search_emails", "send_email",
-    }
-
-    if not hasattr(agent, "tools"):
-        return
-
-    patched = []
-    for tool in agent.tools:
-        fn = getattr(tool, "func", None) or tool
-        name = getattr(fn, "__name__", "") or getattr(tool, "name", "")
-        if name in workspace_tool_names:
-            patched_fn = functools.partial(fn, _access_token=access_token)
-            patched_fn.__name__ = fn.__name__
-            patched_fn.__doc__ = fn.__doc__
-            patched.append(patched_fn)
-        else:
-            patched.append(tool)
-    agent.tools = patched
 
 
 # ── Route ─────────────────────────────────────────────────────────────────────
