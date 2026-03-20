@@ -73,6 +73,10 @@ class Settings(BaseSettings):
         return {e.strip().lower() for e in self.owner_emails.split(",") if e.strip()}
 
     @property
+    def allowed_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.allowed_origin.split(",") if o.strip()]
+
+    @property
     def is_production(self) -> bool:
         return self.environment == "production"
 

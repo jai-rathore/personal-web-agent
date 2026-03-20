@@ -60,8 +60,8 @@ async def google_callback(
 
     token = auth_service.create_session_token(user)
 
-    # Redirect back to the frontend origin
-    frontend_origin = settings.allowed_origin.rstrip("/")
+    # Redirect back to the frontend origin (use first in the list)
+    frontend_origin = settings.allowed_origins_list[0].rstrip("/")
     redirect = RedirectResponse(url=f"{frontend_origin}/")
 
     redirect.set_cookie(
