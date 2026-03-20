@@ -68,8 +68,8 @@ async def google_callback(
         key="session_token",
         value=token,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=True,
+        samesite="none",  # required for cross-origin cookie (frontend and backend on different domains)
         max_age=settings.jwt_expire_minutes * 60,
     )
     log.info("Session cookie set for %s (owner=%s)", user.email, user.is_owner)
@@ -99,5 +99,5 @@ async def get_me(
 @router.post("/logout", summary="Log out and clear session cookie")
 async def logout(response: Response) -> JSONResponse:
     """Clear the session cookie."""
-    response.delete_cookie(key="session_token")
+    response.delete_cookie(key="session_token", httponly=True, secure=True, samesite="none")
     return JSONResponse(content={"status": "logged_out"})
