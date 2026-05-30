@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Message } from '../types';
 
 interface MessageListProps {
@@ -6,6 +7,20 @@ interface MessageListProps {
   isStreaming: boolean;
   isWaitingForFirstToken?: boolean;
 }
+
+const AssistantAvatar: React.FC = () => (
+  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+    <span className="text-white text-xs font-bold">J</span>
+  </div>
+);
+
+const ThinkingDots: React.FC = () => (
+  <div className="thinking-dots">
+    <div className="thinking-dot animate-dot-bounce-1" />
+    <div className="thinking-dot animate-dot-bounce-2" />
+    <div className="thinking-dot animate-dot-bounce-3" />
+  </div>
+);
 
 const MessageList: React.FC<MessageListProps> = ({ messages, isStreaming, isWaitingForFirstToken = false }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -18,65 +33,72 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isStreaming, isWait
     scrollToBottom();
   }, [messages]);
 
-  const formatContent = (content: string) => {
-    // Simple markdown-like formatting
-    return content.split('\n').map((line, i) => {
-      // Handle bullet points
-      if (line.trim().startsWith('- ')) {
-        return (
-          <li key={i} className="ml-4">
-            {line.substring(2)}
-          </li>
-        );
-      }
-      // Handle numbered lists
-      if (/^\d+\.\s/.test(line.trim())) {
-        return (
-          <li key={i} className="ml-4">
-            {line}
-          </li>
-        );
-      }
-      // Regular paragraph
-      return line ? (
-        <p key={i} className="mb-2">
-          {line}
-        </p>
-      ) : (
-        <br key={i} />
-      );
-    });
-  };
-
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
-      <div className="max-w-4xl mx-auto space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+      <div className="max-w-3xl mx-auto space-y-5">
+        {messages.map((message) => {
+          const isUser = message.role === 'user';
+          const isLast = message === messages[messages.length - 1];
+          const isAssistant = message.role === 'assistant';
+
+          return (
             <div
-              className={`message-bubble ${
-                message.role === 'user' ? 'message-user' : 'message-assistant'
-              }`}
+              key={message.id}
+              className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
-              <div className="whitespace-pre-wrap">{formatContent(message.content)}</div>
-              {message.role === 'assistant' && message === messages[messages.length - 1] && (
-                <>
-                  {isWaitingForFirstToken ? (
-                    <div className="flex items-center mt-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                      <span className="ml-2 text-sm text-gray-500">Thinking...</span>
-                    </div>
-                  ) : isStreaming && message.content && (
-                    <span className="inline-block w-2 h-4 bg-gray-400 animate-pulse ml-1" />
+              {isAssistant && <AssistantAvatar />}
+
+              <div
+                className={`message-bubble ${
+                  isUser ? 'message-user' : 'message-assistant'
+                }`}
+              >
+                <div className="prose-chat text-[0.9375rem] leading-relaxed">
+                  {isUser ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  ) : (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        a: ({ href, children }) => (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-600 underline underline-offset-2 hover:text-brand-700"
+                          >
+                            {children}
+                          </a>
+                        ),
+                        ul: ({ children }) => <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>,
+                        li: ({ children }) => <li>{children}</li>,
+                        code: ({ children }) => (
+                          <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-sm font-mono">
+                            {children}
+                          </code>
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
                   )}
-                </>
-              )}
+                </div>
+
+                {isAssistant && isLast && (
+                  <>
+                    {isWaitingForFirstToken ? (
+                      <ThinkingDots />
+                    ) : isStreaming && message.content && (
+                      <span className="inline-block w-0.5 h-4 bg-brand-400 animate-pulse ml-0.5 rounded-full" />
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
     </div>

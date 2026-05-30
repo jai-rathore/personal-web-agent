@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -29,10 +29,16 @@ class Settings(BaseSettings):
     # ── Google / Gemini ──────────────────────────────────────────────────────
     google_api_key: str = ""
     google_genai_use_vertexai: bool = False
-    # Chat model – Gemini 3.1 Pro preview (latest available)
-    chat_model: str = "gemini-3.1-pro-preview"
-    # Fast/cheap model
-    fast_model: str = "gemini-3.1-flash-lite-preview"
+    # Chat model
+    chat_model: str = "gemini-3.5-flash"
+    # Stored refresh token for calendar access (generated once via setup_calendar.py)
+    google_refresh_token: str = ""
+
+    # ── Calendly ────────────────────────────────────────────────────────────
+    # Personal access token from https://calendly.com/integrations/api_webhooks
+    calendly_api_key: str = ""
+    # Event type URI (run: curl -H "Authorization: Bearer <token>" https://api.calendly.com/event_types?user=<user_uri>)
+    calendly_event_type_uri: str = ""
 
     # ── Google OAuth2 ────────────────────────────────────────────────────────
     google_client_id: str = ""

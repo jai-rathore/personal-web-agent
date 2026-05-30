@@ -7,23 +7,24 @@ const Footer: React.FC = () => {
 
   return (
     <>
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-12 text-sm text-gray-600 space-x-6">
-            <Link to="/privacy" className="hover:text-gray-900 transition-colors">
-              Privacy Policy
+      <footer className="bg-white/80 backdrop-blur-lg border-t border-slate-200/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="flex justify-center items-center h-10 text-xs text-slate-400 gap-4">
+            <Link to="/privacy" className="hover:text-slate-600 transition-colors">
+              Privacy
             </Link>
+            <span className="text-slate-200">|</span>
             <button
               onClick={() => setIsFeedbackModalOpen(true)}
-              className="hover:text-gray-900 transition-colors"
+              className="hover:text-slate-600 transition-colors"
             >
-              💬 Share Thoughts
+              Feedback
             </button>
           </div>
         </div>
       </footer>
 
-      <FeedbackModal 
+      <FeedbackModal
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
       />

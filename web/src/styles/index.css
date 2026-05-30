@@ -6,30 +6,49 @@
   html {
     @apply h-full;
   }
-  
+
   body {
-    @apply h-full m-0 bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply h-full m-0 bg-slate-50 text-slate-900 font-sans antialiased;
   }
-  
+
   #root {
     @apply h-full;
   }
 }
 
 @layer components {
+  /* ── Message Bubbles ──────────────────────────────────────────────── */
   .message-bubble {
-    @apply max-w-[80%] rounded-lg px-4 py-2 shadow-sm;
+    @apply max-w-[80%] rounded-2xl px-4 py-3 animate-fade-in;
   }
-  
+
   .message-user {
-    @apply bg-blue-600 text-white ml-auto;
+    @apply bg-brand-600 text-white ml-auto rounded-br-md;
   }
-  
+
   .message-assistant {
-    @apply bg-white text-gray-900 border border-gray-200;
+    @apply bg-white text-slate-800 border border-slate-200/80 shadow-sm rounded-bl-md;
   }
-  
-  .starter-chip {
-    @apply inline-block px-4 py-2 rounded-full bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors;
+
+  /* ── Starter Cards ────────────────────────────────────────────────── */
+  .starter-card {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-slate-200/80
+           text-sm font-medium text-slate-700 shadow-sm
+           hover:border-brand-300 hover:shadow-md hover:text-brand-700
+           cursor-pointer transition-all duration-200
+           active:scale-[0.98];
+  }
+
+  .starter-card-icon {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0;
+  }
+
+  /* ── Thinking Dots ────────────────────────────────────────────────── */
+  .thinking-dots {
+    @apply flex items-center gap-1.5 px-4 py-3;
+  }
+
+  .thinking-dot {
+    @apply w-2 h-2 rounded-full bg-brand-400;
   }
 }

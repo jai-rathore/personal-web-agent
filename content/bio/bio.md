@@ -28,4 +28,3 @@ Direct, technical, no fluff. If you ask Jai a question, he'll give you a real an
 - **LinkedIn:** https://www.linkedin.com/in/jrathore
 - **X / Twitter:** https://x.com/Jai_A_Rathore
 - **Website:** https://www.jairathore.com
-- **Calendly:** https://calendly.com/jairathore/30min

@@ -92,13 +92,23 @@ class AuthService:
         is_owner = email in self._owner_emails
         log.info("OAuth2 login: email=%s is_owner=%s", email, is_owner)
 
-        return AuthUser(
+        user = AuthUser(
             email=email,
             name=userinfo.get("name", ""),
             picture=userinfo.get("picture", ""),
             is_owner=is_owner,
             access_token=tokens.get("access_token", ""),
         )
+
+        # Persist the refresh token so the agent can access calendar
+        # on behalf of visitors even when the owner is not logged in.
+        refresh_token = tokens.get("refresh_token")
+        if refresh_token and is_owner:
+            from app.services.token_store import save_refresh_token
+            save_refresh_token(refresh_token)
+            log.info("Stored refresh token for owner %s", email)
+
+        return user
 
     def create_session_token(self, user: AuthUser) -> str:
         """Issue a signed JWT session token."""

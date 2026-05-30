@@ -27,6 +27,10 @@ web/node_modules/
 web/dist/
 dist/
 
+# Credentials / tokens
+.google_refresh_token.json
+api/.google_refresh_token.json
+
 # Environment files
 .env
 .env.local

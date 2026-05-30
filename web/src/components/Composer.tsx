@@ -27,6 +27,10 @@ const Composer: React.FC<ComposerProps> = ({ onSend, isStreaming, isDocked = fal
     if (message.trim() && !isStreaming) {
       onSend(message.trim());
       setMessage('');
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
     }
   };
 
@@ -46,8 +50,8 @@ const Composer: React.FC<ComposerProps> = ({ onSend, isStreaming, isDocked = fal
   };
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className={isDocked ? 'w-full' : 'w-full max-w-2xl mx-auto'}
     >
       <div className="relative">
@@ -60,23 +64,29 @@ const Composer: React.FC<ComposerProps> = ({ onSend, isStreaming, isDocked = fal
           }}
           onKeyDown={handleKeyDown}
           placeholder="Ask about Jai's background, skills, or schedule a meeting..."
-          className="w-full px-4 py-3 pr-12 bg-white border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center sm:text-left placeholder-gray-400"
+          className="w-full px-4 py-3 pr-12 bg-white border border-slate-200 rounded-xl resize-none
+                     focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400
+                     text-sm sm:text-base text-slate-800 placeholder-slate-400
+                     shadow-sm transition-shadow duration-200
+                     hover:shadow-md focus:shadow-md"
           rows={1}
           disabled={isStreaming}
         />
         <button
           type="submit"
           disabled={!message.trim() || isStreaming}
-          className="absolute right-2 bottom-2 p-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          className="absolute right-2 bottom-2 p-2 text-white bg-brand-600 rounded-lg
+                     hover:bg-brand-700 disabled:bg-slate-300 disabled:cursor-not-allowed
+                     transition-colors shadow-sm"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
           </svg>
         </button>
       </div>
-      <p className="mt-2 text-xs text-gray-500 text-center">
-        <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line, ⌘K to focus</span>
-        <span className="sm:hidden">Tap send button or use return key</span>
+      <p className="mt-2 text-xs text-slate-400 text-center">
+        <span className="hidden sm:inline">Enter to send &middot; Shift+Enter for new line &middot; &#8984;K to focus</span>
+        <span className="sm:hidden">Tap send or press return</span>
       </p>
     </form>
   );

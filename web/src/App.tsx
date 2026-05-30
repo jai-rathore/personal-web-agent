@@ -11,17 +11,17 @@ const App: React.FC = () => {
       <div className="h-full flex flex-col">
         <Routes>
           <Route path="/privacy" element={<PrivacyPage />} />
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <>
                 <Header />
-                <main className="flex-1 pt-16 pb-12 overflow-hidden">
+                <main className="flex-1 pt-14 overflow-hidden">
                   <ChatShell />
                 </main>
                 <Footer />
               </>
-            } 
+            }
           />
         </Routes>
       </div>

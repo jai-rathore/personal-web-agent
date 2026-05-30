@@ -103,6 +103,10 @@ async def _stream_agent(
         is_owner=is_owner,
         chat_model=settings.chat_model,
         access_token=user.access_token if (is_owner and user) else "",
+        client_id=settings.google_client_id,
+        client_secret=settings.google_client_secret,
+        calendly_api_key=settings.calendly_api_key,
+        calendly_event_type_uri=settings.calendly_event_type_uri,
     )
 
     runner = Runner(

@@ -10,10 +10,12 @@ from google.adk.agents import Agent
 from app.agent.content import ContentLoader
 from app.agent.tools.public import (
     get_contact_info,
+    make_calendar_tools,
     make_lookup_knowledge_tool,
-    schedule_calendly_meeting,
 )
-import app.agent.tools.workspace as _workspace
+from app.agent.tools.workspace import make_gmail_tools, make_owner_calendar_tools
+from app.services.calendar_service import CalendarService
+from app.services.token_store import load_refresh_token
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ _PT_TZ = ZoneInfo("America/Los_Angeles")
 
 # ── Visitor instruction (public, third-person representative) ─────────────────
 
-_VISITOR_INSTRUCTION = """\
+_VISITOR_INSTRUCTION_BASE = """\
 You are Jai Rathore's personal web agent — his intelligent internet representative.
 Visitors are talking to you to learn about Jai, schedule time with him, or get his contact info.
 
@@ -35,8 +37,9 @@ Visitors are talking to you to learn about Jai, schedule time with him, or get h
 ## What You Can Do
 1. **Answer questions about Jai** using his resume and bio. For deeper questions about specific \
 projects (like FluxBot or this website), use the `lookup_knowledge` tool to get detail.
-2. **Schedule meetings** — use `schedule_calendly_meeting` to share his Calendly link.
+{calendar_section}\
 3. **Share contact info** — use `get_contact_info` for email, LinkedIn, X, or website.
+{meeting_flow_section}\
 
 ## Guardrails
 - Only discuss topics related to Jai's professional background, skills, projects, and availability.
@@ -48,6 +51,27 @@ projects (like FluxBot or this website), use the `lookup_knowledge` tool to get 
 ## Jai's Background
 
 {context}
+"""
+
+_CALENDAR_SECTION = """\
+2. **Check Jai's calendar** — use `check_availability` to find open meeting slots on a specific date.
+3. **Schedule meetings** — after confirming a time slot and getting the visitor's name and email, \
+use `schedule_meeting` to book it on Jai's calendar. The visitor will receive a calendar invite.
+"""
+
+_NO_CALENDAR_SECTION = """\
+2. **Contact Jai** — if someone wants to meet, share his contact info so they can reach out directly.
+"""
+
+_MEETING_FLOW_SECTION = """\
+
+## Meeting Booking Flow
+When a visitor wants to meet Jai:
+1. Ask what date works for them.
+2. Use `check_availability` to show open slots (all times are Pacific Time).
+3. Let them pick a slot.
+4. Ask for their name and email.
+5. Use `schedule_meeting` to book it. Confirm success and share the details.
 """
 
 
@@ -65,7 +89,6 @@ Hey Jai — you're authenticated. I'm your personal assistant with full workspac
 - **Answer questions about yourself** — full access to all your content, including project deep-dives.
 - **Google Calendar** — list, create, update, or delete events.
 - **Gmail** — list, search, read, or send emails.
-- **Schedule meetings** — share your Calendly link if needed.
 - **Look up detailed content** — use `lookup_knowledge` for deep-dives on any project or topic.
 
 ## How I Behave
@@ -90,10 +113,15 @@ Current date/time: {current_time} (Pacific Time)
 # ── Instruction builders ───────────────────────────────────────────────────────
 
 
-def _build_visitor_instruction(content_loader: ContentLoader) -> str:
+def _build_visitor_instruction(content_loader: ContentLoader, has_calendar: bool = False) -> str:
     current_time = datetime.now(_PT_TZ).strftime("%A, %B %-d, %Y at %-I:%M %p %Z")
     context = content_loader.build_context_block()
-    return _VISITOR_INSTRUCTION.format(current_time=current_time, context=context)
+    return _VISITOR_INSTRUCTION_BASE.format(
+        current_time=current_time,
+        context=context,
+        calendar_section=_CALENDAR_SECTION if has_calendar else _NO_CALENDAR_SECTION,
+        meeting_flow_section=_MEETING_FLOW_SECTION if has_calendar else "",
+    )
 
 
 def _build_owner_instruction(content_loader: ContentLoader) -> str:
@@ -102,163 +130,26 @@ def _build_owner_instruction(content_loader: ContentLoader) -> str:
     return _OWNER_INSTRUCTION.format(current_time=current_time, context=context)
 
 
-# ── Workspace tool closures ────────────────────────────────────────────────────
+# ── Calendar service factory ──────────────────────────────────────────────────
 
 
-def _make_workspace_tools(access_token: str) -> list:
-    """Return workspace tool functions closed over access_token.
+def _get_calendar_service(
+    access_token: str = "",
+    client_id: str = "",
+    client_secret: str = "",
+) -> CalendarService | None:
+    """Build a CalendarService from the best available credentials.
 
-    ADK inspects function signatures and docstrings to build tool schemas.
-    Using closures produces proper callables ADK can register without issues.
+    Preference order:
+    1. Stored refresh token (works for both visitors and owner)
+    2. Session access token (owner-only, short-lived)
     """
-    tok = access_token
-
-    async def list_calendar_events(
-        date: str = "",
-        max_results: int = 10,
-        calendar_id: str = "primary",
-    ) -> dict:
-        """List upcoming Google Calendar events.
-
-        Args:
-            date: ISO date string to filter events (e.g. '2026-03-20'). Leave empty for today onward.
-            max_results: Maximum number of events to return (default 10).
-            calendar_id: Calendar ID to query (default 'primary').
-        """
-        return await _workspace.list_calendar_events(
-            date=date, max_results=max_results, calendar_id=calendar_id, _access_token=tok
-        )
-
-    async def create_calendar_event(
-        summary: str,
-        start: str,
-        end: str,
-        description: str = "",
-        attendee_email: str = "",
-        calendar_id: str = "primary",
-    ) -> dict:
-        """Create a new Google Calendar event.
-
-        Args:
-            summary: Event title.
-            start: Start datetime in ISO format (e.g. '2026-03-20T10:00:00-07:00').
-            end: End datetime in ISO format.
-            description: Optional event description.
-            attendee_email: Optional attendee email address to invite.
-            calendar_id: Calendar ID (default 'primary').
-        """
-        return await _workspace.create_calendar_event(
-            summary=summary, start=start, end=end, description=description,
-            attendee_email=attendee_email, calendar_id=calendar_id, _access_token=tok,
-        )
-
-    async def update_calendar_event(
-        event_id: str,
-        summary: str = "",
-        start: str = "",
-        end: str = "",
-        description: str = "",
-        calendar_id: str = "primary",
-    ) -> dict:
-        """Update an existing Google Calendar event.
-
-        Args:
-            event_id: The event ID to update.
-            summary: New event title (optional).
-            start: New start datetime in ISO format (optional).
-            end: New end datetime in ISO format (optional).
-            description: New description (optional).
-            calendar_id: Calendar ID (default 'primary').
-        """
-        return await _workspace.update_calendar_event(
-            event_id=event_id, summary=summary, start=start, end=end,
-            description=description, calendar_id=calendar_id, _access_token=tok,
-        )
-
-    async def delete_calendar_event(
-        event_id: str,
-        calendar_id: str = "primary",
-    ) -> dict:
-        """Delete a Google Calendar event.
-
-        Args:
-            event_id: The event ID to delete.
-            calendar_id: Calendar ID (default 'primary').
-        """
-        return await _workspace.delete_calendar_event(
-            event_id=event_id, calendar_id=calendar_id, _access_token=tok,
-        )
-
-    async def list_emails(
-        query: str = "",
-        max_results: int = 10,
-        label_ids: str = "INBOX",
-    ) -> dict:
-        """List emails from Gmail, optionally filtered by query.
-
-        Args:
-            query: Gmail search query (e.g. 'from:boss@example.com is:unread').
-            max_results: Maximum number of messages to return (default 10).
-            label_ids: Comma-separated label IDs to filter by (default 'INBOX').
-        """
-        return await _workspace.list_emails(
-            query=query, max_results=max_results, label_ids=label_ids, _access_token=tok,
-        )
-
-    async def get_email(
-        message_id: str,
-        format: str = "full",
-    ) -> dict:
-        """Get the full content of a specific email.
-
-        Args:
-            message_id: The Gmail message ID.
-            format: Response format – 'full', 'metadata', or 'minimal' (default 'full').
-        """
-        return await _workspace.get_email(
-            message_id=message_id, format=format, _access_token=tok,
-        )
-
-    async def search_emails(
-        query: str,
-        max_results: int = 10,
-    ) -> dict:
-        """Search Gmail using a search query.
-
-        Args:
-            query: Gmail search query (e.g. 'subject:meeting from:recruiter').
-            max_results: Maximum number of results to return (default 10).
-        """
-        return await _workspace.search_emails(
-            query=query, max_results=max_results, _access_token=tok,
-        )
-
-    async def send_email(
-        to: str,
-        subject: str,
-        body: str,
-    ) -> dict:
-        """Send an email via Gmail.
-
-        Args:
-            to: Recipient email address.
-            subject: Email subject line.
-            body: Plain-text email body.
-        """
-        return await _workspace.send_email(
-            to=to, subject=subject, body=body, _access_token=tok,
-        )
-
-    return [
-        list_calendar_events,
-        create_calendar_event,
-        update_calendar_event,
-        delete_calendar_event,
-        list_emails,
-        get_email,
-        search_emails,
-        send_email,
-    ]
+    refresh_token = load_refresh_token()
+    if refresh_token and client_id and client_secret:
+        return CalendarService.from_refresh_token(refresh_token, client_id, client_secret)
+    if access_token:
+        return CalendarService.from_access_token(access_token)
+    return None
 
 
 # ── Agent factory ──────────────────────────────────────────────────────────────
@@ -267,32 +158,65 @@ def _make_workspace_tools(access_token: str) -> list:
 def create_agent(
     content_loader: ContentLoader,
     is_owner: bool = False,
-    chat_model: str = "gemini-3.1-pro-preview",
+    chat_model: str = "gemini-3.5-flash",
     access_token: str = "",
+    client_id: str = "",
+    client_secret: str = "",
+    calendly_api_key: str = "",
+    calendly_event_type_uri: str = "",
 ) -> Agent:
     """Create an ADK Agent configured for visitor or owner access."""
 
     lookup_knowledge = make_lookup_knowledge_tool(content_loader)
-    public_tools = [schedule_calendly_meeting, get_contact_info, lookup_knowledge]
-    workspace_tools = _make_workspace_tools(access_token) if is_owner else []
-    tools = public_tools + workspace_tools
+    public_tools: list = [get_contact_info, lookup_knowledge]
 
+    # Calendar tools for everyone (visitors get check + schedule, owner gets full CRUD)
+    cal = _get_calendar_service(
+        access_token=access_token,
+        client_id=client_id,
+        client_secret=client_secret,
+    )
+
+    # Calendly for availability (aggregates Outlook + Google)
+    calendly = None
+    if calendly_api_key:
+        from app.services.calendly_service import CalendlyService
+        calendly = CalendlyService(
+            api_key=calendly_api_key,
+            event_type_uri=calendly_event_type_uri,
+        )
+        log.info("Calendly integration enabled")
+
+    if cal:
+        if is_owner:
+            public_tools += make_owner_calendar_tools(cal)
+        else:
+            public_tools += make_calendar_tools(cal, calendly=calendly)
+    else:
+        log.warning("No calendar credentials available — calendar tools disabled")
+
+    # Gmail tools (owner-only, requires session access token)
+    if is_owner and access_token:
+        public_tools += make_gmail_tools(access_token)
+
+    has_calendar = cal is not None
     if is_owner:
         instruction = _build_owner_instruction(content_loader)
     else:
-        instruction = _build_visitor_instruction(content_loader)
+        instruction = _build_visitor_instruction(content_loader, has_calendar=has_calendar)
 
     agent = Agent(
         name="jai_web_agent",
         model=chat_model,
         description="Jai Rathore's personal web agent – answers questions, books meetings, and manages Jai's workspace.",
         instruction=instruction,
-        tools=tools,
+        tools=public_tools,
     )
     log.info(
-        "Created agent (model=%s, owner=%s, tools=%d)",
+        "Created agent (model=%s, owner=%s, tools=%d, calendar=%s)",
         chat_model,
         is_owner,
-        len(tools),
+        len(public_tools),
+        "yes" if cal else "no",
     )
     return agent

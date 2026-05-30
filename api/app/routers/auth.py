@@ -64,12 +64,14 @@ async def google_callback(
     frontend_origin = settings.allowed_origins_list[0].rstrip("/")
     redirect = RedirectResponse(url=f"{frontend_origin}/")
 
+    # In development, secure=False and samesite=lax so cookies work on localhost
+    is_prod = settings.is_production
     redirect.set_cookie(
         key="session_token",
         value=token,
         httponly=True,
-        secure=True,
-        samesite="none",  # required for cross-origin cookie (frontend and backend on different domains)
+        secure=is_prod,
+        samesite="none" if is_prod else "lax",
         max_age=settings.jwt_expire_minutes * 60,
     )
     log.info("Session cookie set for %s (owner=%s)", user.email, user.is_owner)
